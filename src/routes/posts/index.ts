@@ -17,7 +17,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
     },
     async function (request, reply): Promise<PostEntity> {
       const { id } = request.params;
+      if (typeof id !== "string") {
+        reply.statusCode = 400;
+        throw new Error("Invalid id");
+      }
       const post = await fastify.db.posts.findOne({ key: "id", equals: id });
+      if (!post) {
+        reply.statusCode = 404;
+        throw new Error("Not exist");
+      }
       return post!;
     }
   );
@@ -43,7 +51,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
       },
     },
     async function (request, reply): Promise<PostEntity> {
-      return await fastify.db.posts.delete(request.id);
+      const post = await fastify.db.posts.findOne({ key: "id", equals: request.params.id });
+      if (!post) {
+        reply.statusCode = 400;
+        throw new Error("Not exist");
+      }
+      return await fastify.db.posts.delete(request.params.id);
     }
   );
 
@@ -56,9 +69,18 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
       },
     },
     async function (request, reply): Promise<PostEntity> {
+      const { id } = request.params;
+      if (typeof id !== "string") {
+        reply.statusCode = 400;
+        throw new Error("Invalid id");
+      }
+      const post = await fastify.db.posts.findOne({ key: "id", equals: id });
+      if (!post) {
+        reply.statusCode = 400;
+        throw new Error("Not exist");
+      }
       const { title, content } = request.body;
-      return await fastify.db.posts.change(request.id, { title, content });
-      // Здесь не нужны ?? в title: request.body.title, content: request.body.content?
+      return await fastify.db.posts.change(request.params.id, { title, content });
     }
   );
 };
