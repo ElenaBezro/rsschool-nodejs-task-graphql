@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
-import { graphql, GraphQLList, GraphQLObjectType, GraphQLSchema } from "graphql";
+import { graphql, GraphQLID, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from "graphql";
 import { graphqlBodySchema, memberTypeType, postType, profileType, userType } from "./schema";
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> => {
@@ -43,6 +43,42 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
             //args: { id: { type: GraphQLID } },
             resolve(parent, args) {
               fastify.db.posts.findMany();
+            },
+          },
+          memberType: {
+            type: memberTypeType,
+            args: { id: { type: GraphQLString } },
+            async resolve(parent, args, context) {
+              const memberType = await fastify.db.memberTypes.findOne({ key: "id", equals: args.id });
+              if (memberType) return memberType;
+              throw fastify.httpErrors.notFound("Not found");
+            },
+          },
+          profile: {
+            type: new GraphQLList(profileType),
+            args: { id: { type: GraphQLID } },
+            async resolve(parent, args, context) {
+              const profile = await fastify.db.profiles.findOne({ key: "id", equals: args.id });
+              if (profile) return profile;
+              throw fastify.httpErrors.notFound("Not found");
+            },
+          },
+          post: {
+            type: new GraphQLList(postType),
+            args: { id: { type: GraphQLID } },
+            async resolve(parent, args, context) {
+              const post = await fastify.db.posts.findOne({ key: "id", equals: args.id });
+              if (post) return post;
+              throw fastify.httpErrors.notFound("Not found");
+            },
+          },
+          user: {
+            type: new GraphQLList(userType),
+            args: { id: { type: GraphQLID } },
+            async resolve(parent, args, context) {
+              const user = await fastify.db.users.findOne({ key: "id", equals: args.id });
+              if (user) return user;
+              throw fastify.httpErrors.notFound("Not found");
             },
           },
         },
