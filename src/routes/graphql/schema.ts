@@ -1,7 +1,5 @@
-import fastify from "fastify";
 import { GraphQLList, GraphQLObjectType } from "graphql";
-import { GraphQLInt, GraphQLSchema, GraphQLString } from "graphql/type";
-import { changeMemberTypeBodySchema } from "../member-types/schema";
+import { GraphQLID, GraphQLInt, GraphQLString } from "graphql/type";
 
 export const graphqlBodySchema = {
   type: "object",
@@ -62,7 +60,7 @@ export const postType = new GraphQLObjectType({
   name: "post",
   fields: () => ({
     id: {
-      type: GraphQLString,
+      type: GraphQLID,
     },
     title: {
       type: GraphQLString,
@@ -71,7 +69,7 @@ export const postType = new GraphQLObjectType({
       type: GraphQLString,
     },
     userId: {
-      type: GraphQLString,
+      type: GraphQLID,
     },
   }),
 });
@@ -80,7 +78,7 @@ export const profileType = new GraphQLObjectType({
   name: "profile",
   fields: () => ({
     id: {
-      type: GraphQLString,
+      type: GraphQLID,
     },
     avatar: {
       type: GraphQLString,
@@ -104,7 +102,7 @@ export const profileType = new GraphQLObjectType({
       type: GraphQLString,
     },
     userId: {
-      type: GraphQLString,
+      type: GraphQLID,
     },
   }),
 });
@@ -113,7 +111,7 @@ export const userType = new GraphQLObjectType({
   name: "user",
   fields: () => ({
     id: {
-      type: GraphQLString,
+      type: GraphQLID,
     },
     firstName: {
       type: GraphQLString,
@@ -125,7 +123,7 @@ export const userType = new GraphQLObjectType({
       type: GraphQLString,
     },
     subscribedToUserIds: {
-      type: new GraphQLList(GraphQLString),
+      type: new GraphQLList(GraphQLID),
     },
   }),
 });
