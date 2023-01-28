@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
 import { graphql, GraphQLID, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from "graphql";
-import { graphqlBodySchema, memberTypeType, postType, profileType, userType } from "./schema";
+import { graphqlBodySchema, memberTypeType, postType, profileType, userFullInfoType, userType } from "./schema";
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> => {
   fastify.post(
@@ -19,30 +19,27 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
         fields: {
           memberTypes: {
             type: new GraphQLList(memberTypeType),
-            //args: { id: { type: GraphQLString } },
-            resolve(parent, args, context) {
-              fastify.db.memberTypes.findMany();
+            async resolve(parent, args, context) {
+              return await fastify.db.memberTypes.findMany();
             },
           },
           profiles: {
             type: new GraphQLList(profileType),
-            //args: { id: { type: GraphQLID } },
-            resolve(parent, args) {
-              fastify.db.profiles.findMany();
+            async resolve(parent, args) {
+              return await fastify.db.profiles.findMany();
             },
           },
           posts: {
             type: new GraphQLList(postType),
             //args: { id: { type: GraphQLID } },
-            resolve(parent, args) {
-              fastify.db.posts.findMany();
+            async resolve(parent, args) {
+              return await fastify.db.posts.findMany();
             },
           },
           users: {
             type: new GraphQLList(userType),
-            //args: { id: { type: GraphQLID } },
-            resolve(parent, args) {
-              fastify.db.posts.findMany();
+            async resolve(parent, args) {
+              return await fastify.db.posts.findMany();
             },
           },
           memberType: {
@@ -79,6 +76,40 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
               const user = await fastify.db.users.findOne({ key: "id", equals: args.id });
               if (user) return user;
               throw fastify.httpErrors.notFound("Not found");
+            },
+          },
+          getUserPostProfileMemberType: {
+            type: userFullInfoType,
+            args: { id: { type: GraphQLID } },
+            async resolve(parent, args, context) {
+              const user = await fastify.db.users.findOne({ key: "id", equals: args.id });
+              if (!user) throw fastify.httpErrors.notFound("Not found");
+              const userPosts = await fastify.db.posts.findMany({ key: "userId", equals: args.id });
+              const userProfiles = await fastify.db.profiles.findMany({ key: "userId", equals: args.id });
+              let userMemberTypes: string[] = [];
+              if (userProfiles) {
+                userMemberTypes = [userProfiles[0].memberTypeId];
+              }
+              return { user, userPosts, userProfiles, userMemberTypes };
+            },
+          },
+
+          getUsersPostProfileMemberType: {
+            type: new GraphQLList(userFullInfoType),
+            async resolve(parent, args, context) {
+              const users = await fastify.db.users.findMany();
+              if (!users) throw fastify.httpErrors.notFound("Not found");
+              return Promise.all(
+                users.map(async (user) => {
+                  const userPosts = await fastify.db.posts.findMany({ key: "userId", equals: user.id });
+                  const userProfiles = await fastify.db.profiles.findMany({ key: "userId", equals: user.id });
+                  let userMemberTypes: string[] = [];
+                  if (userProfiles) {
+                    userMemberTypes = [userProfiles[0].memberTypeId];
+                  }
+                  return { user, userPosts, userProfiles, userMemberTypes };
+                })
+              );
             },
           },
         },
