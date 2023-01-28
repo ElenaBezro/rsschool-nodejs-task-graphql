@@ -85,12 +85,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
               const user = await fastify.db.users.findOne({ key: "id", equals: args.id });
               if (!user) throw fastify.httpErrors.notFound("Not found");
               const userPosts = await fastify.db.posts.findMany({ key: "userId", equals: args.id });
-              const userProfiles = await fastify.db.profiles.findMany({ key: "userId", equals: args.id });
-              let userMemberTypes: string[] = [];
-              if (userProfiles) {
-                userMemberTypes = [userProfiles[0].memberTypeId];
+              const userProfile = await fastify.db.profiles.findOne({ key: "userId", equals: args.id });
+              let userMemberType: string = "";
+              if (userProfile) {
+                userMemberType = userProfile.memberTypeId;
               }
-              return { user, userPosts, userProfiles, userMemberTypes };
+              return { user, userPosts, userProfile, userMemberType };
             },
           },
 
@@ -102,12 +102,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
               return Promise.all(
                 users.map(async (user) => {
                   const userPosts = await fastify.db.posts.findMany({ key: "userId", equals: user.id });
-                  const userProfiles = await fastify.db.profiles.findMany({ key: "userId", equals: user.id });
-                  let userMemberTypes: string[] = [];
-                  if (userProfiles) {
-                    userMemberTypes = [userProfiles[0].memberTypeId];
+                  const userProfile = await fastify.db.profiles.findOne({ key: "userId", equals: user.id });
+                  let userMemberType: string = "";
+                  if (userProfile) {
+                    userMemberType = userProfile.memberTypeId;
                   }
-                  return { user, userPosts, userProfiles, userMemberTypes };
+                  return { user, userPosts, userProfile, userMemberType };
                 })
               );
             },

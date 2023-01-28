@@ -137,11 +137,11 @@ export const userFullInfoType = new GraphQLObjectType({
     userPosts: {
       type: new GraphQLList(postType),
     },
-    userProfiles: {
-      type: new GraphQLList(profileType),
+    userProfile: {
+      type: profileType,
     },
-    userMemberTypes: {
-      type: new GraphQLList(memberTypeType),
+    userMemberType: {
+      type: memberTypeType,
     },
   }),
 });
