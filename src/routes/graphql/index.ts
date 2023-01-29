@@ -101,43 +101,43 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
           users: {
             type: new GraphQLList(userType),
             async resolve(parent, args) {
-              return await fastify.db.posts.findMany();
+              return await fastify.db.users.findMany();
             },
           },
           memberType: {
             type: memberTypeType,
-            args: { id: { type: GraphQLString } },
+            args: { memberTypeId: { type: GraphQLString } },
             async resolve(parent, args, context) {
-              const memberType = await fastify.db.memberTypes.findOne({ key: "id", equals: args.id });
+              const memberType = await fastify.db.memberTypes.findOne({ key: "id", equals: args.memberTypeId });
               if (!memberType) throw fastify.httpErrors.notFound("Not found");
               return memberType;
             },
           },
           profile: {
             type: profileType,
-            args: { id: { type: GraphQLID } },
+            args: { profileId: { type: GraphQLID } },
             async resolve(parent, args, context) {
-              const profile = await fastify.db.profiles.findOne({ key: "id", equals: args.id });
+              const profile = await fastify.db.profiles.findOne({ key: "id", equals: args.profileId });
               if (!profile) throw fastify.httpErrors.notFound("Not found");
               return profile;
             },
           },
           post: {
             type: postType,
-            args: { id: { type: GraphQLID } },
+            args: { postId: { type: GraphQLID } },
             async resolve(parent, args, context) {
               console.log("args", JSON.stringify(args));
               console.log("parent", JSON.stringify(parent));
-              const post = await fastify.db.posts.findOne({ key: "id", equals: args.id });
+              const post = await fastify.db.posts.findOne({ key: "id", equals: args.postId });
               if (!post) throw fastify.httpErrors.notFound("Not found");
               return post;
             },
           },
           user: {
             type: userType,
-            args: { id: { type: GraphQLID } },
+            args: { userIdd: { type: GraphQLID } },
             async resolve(parent, args, context) {
-              const user = await fastify.db.users.findOne({ key: "id", equals: args.id });
+              const user = await fastify.db.users.findOne({ key: "id", equals: args.userIdd });
               if (!user) throw fastify.httpErrors.notFound("Not found");
               return user;
             },
@@ -150,10 +150,10 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
               if (!user) throw fastify.httpErrors.notFound("Not found");
               const userPosts = await fastify.db.posts.findMany({ key: "userId", equals: args.id });
               const userProfile = await fastify.db.profiles.findOne({ key: "userId", equals: args.id });
-              let userMemberType: string = "";
-              if (userProfile) {
-                userMemberType = userProfile.memberTypeId;
-              }
+
+              if (!userProfile) return { user, userPosts, userProfile, userMemberType: null };
+              const userMemberType = await fastify.db.memberTypes.findOne({ key: "id", equals: userProfile.memberTypeId });
+
               return { user, userPosts, userProfile, userMemberType };
             },
           },
@@ -167,10 +167,8 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
                 users.map(async (user) => {
                   const userPosts = await fastify.db.posts.findMany({ key: "userId", equals: user.id });
                   const userProfile = await fastify.db.profiles.findOne({ key: "userId", equals: user.id });
-                  let userMemberType: string = "";
-                  if (userProfile) {
-                    userMemberType = userProfile.memberTypeId;
-                  }
+                  if (!userProfile) return { user, userPosts, userProfile, userMemberType: null };
+                  const userMemberType = await fastify.db.memberTypes.findOne({ key: "id", equals: userProfile.memberTypeId });
                   return { user, userPosts, userProfile, userMemberType };
                 })
               );
