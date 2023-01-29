@@ -163,3 +163,35 @@ export const userFullInfoType = new GraphQLObjectType({
     },
   }),
 });
+
+// Get users with their userSubscribedTo, profile.
+export const usersWithUserSubscribedToProfile = new GraphQLObjectType({
+  name: "usersWithUserSubscribedToProfileType",
+  fields: () => ({
+    user: {
+      type: userType,
+    },
+    userSubscribedTo: {
+      type: new GraphQLList(GraphQLID),
+    },
+    userProfile: {
+      type: profileType,
+    },
+  }),
+});
+
+// Get user by id with their userSubscribedTo, posts.
+export const userWithUserSubscribedToPosts = new GraphQLObjectType({
+  name: "userWithUserSubscribedToPostsType",
+  fields: () => ({
+    user: {
+      type: userType,
+    },
+    subscribedToUser: {
+      type: new GraphQLList(GraphQLString),
+    },
+    userPosts: {
+      type: new GraphQLList(postType),
+    },
+  }),
+});

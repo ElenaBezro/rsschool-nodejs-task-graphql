@@ -4,7 +4,7 @@ import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
-import { getAllUsersPostsProfilesMemberTypesType, graphqlBodySchema, memberTypeType, postType, profileType, userFullInfoType, userType } from "./schema";
+import { getAllUsersPostsProfilesMemberTypesType, graphqlBodySchema, memberTypeType, postType, profileType, userFullInfoType, usersWithUserSubscribedToProfile, userType, userWithUserSubscribedToPosts } from "./schema";
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> => {
   fastify.post(
@@ -174,8 +174,49 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
               );
             },
           },
+
+          getUsersWithUserSubscribedToProfile: {
+            type: new GraphQLList(usersWithUserSubscribedToProfile),
+            async resolve(parent, args, context) {
+              const users = await fastify.db.users.findMany();
+              const result = users.map(async (user) => {
+                const userSubscribedTo = await fastify.db.users.findMany({ key: "subscribedToUserIds", inArray: user.id });
+                const userProfile = await fastify.db.profiles.findOne({ key: "userId", equals: user.id });
+                if (userProfile) return { user, userSubscribedTo, userProfile };
+                return { user, userSubscribedTo, userProfile: null };
+              });
+              return result;
+            },
+          },
+
+          getUserWithUserSubscribedToPosts: {
+            type: userWithUserSubscribedToPosts,
+            args: { id: { type: GraphQLID } },
+            async resolve(parent, args, context) {
+              const user = await fastify.db.users.findOne({ key: "id", equals: args.id });
+              if (user) {
+                const userPosts = await fastify.db.posts.findMany({ key: "userId", equals: args.id });
+                if (userPosts) return { user, subscribedToUser: user.subscribedToUserIds || [], userPosts };
+                return { user, subscribedToUser: user.subscribedToUserIds || [], userPosts: null };
+              }
+              throw fastify.httpErrors.notFound("Not found");
+            },
+          },
         },
       });
+
+      // const mutation = new GraphQLObjectType({
+      //   name: "Mutation",
+      //   description: "This is the root mutation",
+      //   fields: {
+      //     createUser: {
+      //       type: createUserType,
+      //       async resolve(parent, args, context) {
+
+      //       }
+      //     }
+      //   }
+      // })
 
       const schema = new GraphQLSchema({
         query: rootQuery,
