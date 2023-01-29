@@ -1,6 +1,10 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
 import { graphql, GraphQLID, GraphQLList, GraphQLObjectType, GraphQLSchema, GraphQLString } from "graphql";
-import { graphqlBodySchema, memberTypeType, postType, profileType, userFullInfoType, userType } from "./schema";
+import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
+import { PostEntity } from "../../utils/DB/entities/DBPosts";
+import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
+import { UserEntity } from "../../utils/DB/entities/DBUsers";
+import { getAllUsersPostsProfilesMemberTypesType, graphqlBodySchema, memberTypeType, postType, profileType, userFullInfoType, userType } from "./schema";
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> => {
   fastify.post(
@@ -11,12 +15,70 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
       },
     },
     async function (request, reply) {
-      console.log(" request");
+      const User1 = await fastify.db.users.create({
+        firstName: "Lena",
+        lastName: "Gjhkjkj",
+        email: "xvx@mail.com",
+      });
+
+      const User2 = await fastify.db.users.create({
+        firstName: "Max",
+        lastName: "Gjhkjkj",
+        email: "xvx@mail.com",
+      });
+
+      await fastify.db.profiles.create({
+        avatar: "foto",
+        sex: "male",
+        birthday: 22111900,
+        country: "Ge",
+        street: "BL",
+        city: "Berlin",
+        userId: User1.id,
+        memberTypeId: "basic",
+      });
+
+      await fastify.db.profiles.create({
+        avatar: "foto",
+        sex: "male",
+        birthday: 22111900,
+        country: "Ge",
+        street: "BL",
+        city: "Berlin",
+        userId: User2.id,
+        memberTypeId: "business",
+      });
+
+      await fastify.db.posts.create({
+        userId: User1.id,
+        title: "Article",
+        content: "blala",
+      });
+
       // The rootValue provides a resolver function for each API endpoint
       const rootQuery = new GraphQLObjectType({
         name: "RootQuery",
         description: "This is the root query",
         fields: {
+          getAllUsersPostsProfilesMemberTypes: {
+            type: getAllUsersPostsProfilesMemberTypesType,
+            async resolve(parent, args, context) {
+              const users = await fastify.db.users.findMany();
+              const usersID: string[] = users.map((user: UserEntity): string => user.id);
+
+              const posts = await fastify.db.posts.findMany();
+              const postsID: string[] = posts.map((post: PostEntity): string => post.id);
+
+              const profiles = await fastify.db.profiles.findMany();
+              const profilesID: string[] = profiles.map((profile: ProfileEntity): string => profile.id);
+
+              const memberTypes = await fastify.db.memberTypes.findMany();
+              const memberTypesID: string[] = memberTypes.map((memberType: MemberTypeEntity): string => memberType.id);
+
+              const result = { users: usersID, posts: postsID, profiles: profilesID, memberTypes: memberTypesID };
+              return result;
+            },
+          },
           memberTypes: {
             type: new GraphQLList(memberTypeType),
             async resolve(parent, args, context) {
@@ -47,35 +109,37 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
             args: { id: { type: GraphQLString } },
             async resolve(parent, args, context) {
               const memberType = await fastify.db.memberTypes.findOne({ key: "id", equals: args.id });
-              if (memberType) return memberType;
-              throw fastify.httpErrors.notFound("Not found");
+              if (!memberType) throw fastify.httpErrors.notFound("Not found");
+              return memberType;
             },
           },
           profile: {
-            type: new GraphQLList(profileType),
+            type: profileType,
             args: { id: { type: GraphQLID } },
             async resolve(parent, args, context) {
               const profile = await fastify.db.profiles.findOne({ key: "id", equals: args.id });
-              if (profile) return profile;
-              throw fastify.httpErrors.notFound("Not found");
+              if (!profile) throw fastify.httpErrors.notFound("Not found");
+              return profile;
             },
           },
           post: {
-            type: new GraphQLList(postType),
+            type: postType,
             args: { id: { type: GraphQLID } },
             async resolve(parent, args, context) {
+              console.log("args", JSON.stringify(args));
+              console.log("parent", JSON.stringify(parent));
               const post = await fastify.db.posts.findOne({ key: "id", equals: args.id });
-              if (post) return post;
-              throw fastify.httpErrors.notFound("Not found");
+              if (!post) throw fastify.httpErrors.notFound("Not found");
+              return post;
             },
           },
           user: {
-            type: new GraphQLList(userType),
+            type: userType,
             args: { id: { type: GraphQLID } },
             async resolve(parent, args, context) {
               const user = await fastify.db.users.findOne({ key: "id", equals: args.id });
-              if (user) return user;
-              throw fastify.httpErrors.notFound("Not found");
+              if (!user) throw fastify.httpErrors.notFound("Not found");
+              return user;
             },
           },
           getUserPostProfileMemberType: {
@@ -123,6 +187,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
       return await graphql({
         schema,
         source: String(request.body.query),
+        variableValues: request.body.variables,
         // contextValue: fastify,
       });
     }
