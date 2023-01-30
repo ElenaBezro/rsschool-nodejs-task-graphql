@@ -5,7 +5,7 @@ import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
-import { createPostInputType, createPostType, createProfileInputType, createProfileType, createUserInputType, createUserType, updateUserInputType } from "./mutationTypes";
+import { createPostInputType, createPostType, createProfileInputType, createProfileType, createUserInputType, createUserType, updatePostInputType, updateProfileInputType, updateUserInputType } from "./mutationTypes";
 import {
   getAllUsersPostsProfilesMemberTypesType,
   graphqlBodySchema,
@@ -286,14 +286,6 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
             type: createProfileType,
             args: {
               profile: { type: createProfileInputType },
-              // avatar: { type: GraphQLString },
-              // sex: { type: GraphQLString },
-              // birthday: { type: GraphQLInt },
-              // country: { type: GraphQLString },
-              // street: { type: GraphQLString },
-              // city: { type: GraphQLString },
-              // userId: { type: GraphQLString },
-              // memberTypeId: { type: GraphQLString },
             },
             async resolve(parent, args, context) {
               const { userId, memberTypeId } = args.profile;
@@ -314,6 +306,20 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
             },
           },
 
+          updateProfile: {
+            type: createProfileType,
+            args: {
+              profileId: { type: GraphQLID },
+              profileData: { type: updateProfileInputType },
+            },
+            async resolve(parent, args, context) {
+              const profile = await fastify.db.profiles.findOne({ key: "id", equals: args.profileId });
+              if (!profile) throw fastify.httpErrors.notFound("Profile not found");
+
+              return await fastify.db.profiles.change(args.profileId, { ...args.profileData });
+            },
+          },
+
           createPost: {
             type: createPostType,
             args: {
@@ -330,6 +336,19 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
 
               const post = await fastify.db.posts.create(args.post);
               return post;
+            },
+          },
+
+          updatePost: {
+            type: createPostType,
+            args: {
+              postId: { type: GraphQLID },
+              postData: { type: updatePostInputType },
+            },
+            async resolve(parent, args, context) {
+              const post = await fastify.db.posts.findOne({ key: "id", equals: args.postId });
+              if (!post) throw fastify.httpErrors.notFound("Post not found");
+              return await fastify.db.posts.change(args.postId, { ...args.postData });
             },
           },
         },
