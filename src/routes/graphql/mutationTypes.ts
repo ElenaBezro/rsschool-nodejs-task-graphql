@@ -66,6 +66,35 @@ export const createProfileType = new GraphQLObjectType({
     },
   }),
 });
+export const createProfileInputType = new GraphQLInputObjectType({
+  name: "createProfileInput",
+  fields: () => ({
+    avatar: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    sex: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    birthday: {
+      type: new GraphQLNonNull(GraphQLInt),
+    },
+    country: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    street: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    city: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    userId: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    memberTypeId: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+  }),
+});
 
 export const createPostType = new GraphQLObjectType({
   name: "createPost",
@@ -82,6 +111,22 @@ export const createPostType = new GraphQLObjectType({
 
     userId: {
       type: GraphQLString,
+    },
+  }),
+});
+
+export const createPostInputType = new GraphQLInputObjectType({
+  name: "createPostInput",
+  fields: () => ({
+    title: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    content: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+
+    userId: {
+      type: new GraphQLNonNull(GraphQLString),
     },
   }),
 });
