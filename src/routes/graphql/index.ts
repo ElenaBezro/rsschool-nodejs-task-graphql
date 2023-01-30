@@ -13,9 +13,9 @@ import {
   profileType,
   userFullInfoType,
   usersWithFullSubscriptionInfoType,
-  usersWithUserSubscribedToProfile,
+  usersWithUserSubscribedToProfileType,
   userType,
-  userWithUserSubscribedToPosts,
+  userWithUserSubscribedToPostsType,
 } from "./schema";
 
 type SubscriptionInfo = {
@@ -194,7 +194,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
           },
 
           getUsersWithUserSubscribedToProfile: {
-            type: new GraphQLList(usersWithUserSubscribedToProfile),
+            type: new GraphQLList(usersWithUserSubscribedToProfileType),
             async resolve(parent, args, context) {
               const users = await fastify.db.users.findMany();
               const result = users.map(async (user) => {
@@ -208,7 +208,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
           },
 
           getUserWithUserSubscribedToPosts: {
-            type: userWithUserSubscribedToPosts,
+            type: userWithUserSubscribedToPostsType,
             args: { id: { type: GraphQLID } },
             async resolve(parent, args, context) {
               const user = await fastify.db.users.findOne({ key: "id", equals: args.id });

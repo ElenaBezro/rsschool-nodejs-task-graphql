@@ -165,8 +165,8 @@ export const userFullInfoType = new GraphQLObjectType({
 });
 
 // Get users with their userSubscribedTo, profile.
-export const usersWithUserSubscribedToProfile = new GraphQLObjectType({
-  name: "usersWithUserSubscribedToProfileType",
+export const usersWithUserSubscribedToProfileType = new GraphQLObjectType({
+  name: "usersWithUserSubscribedToProfile",
   fields: () => ({
     user: {
       type: userType,
@@ -181,8 +181,8 @@ export const usersWithUserSubscribedToProfile = new GraphQLObjectType({
 });
 
 // Get user by id with their userSubscribedTo, posts.
-export const userWithUserSubscribedToPosts = new GraphQLObjectType({
-  name: "userWithUserSubscribedToPostsType",
+export const userWithUserSubscribedToPostsType = new GraphQLObjectType({
+  name: "userWithUserSubscribedToPosts",
   fields: () => ({
     user: {
       type: userType,
