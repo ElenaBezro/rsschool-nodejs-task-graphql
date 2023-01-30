@@ -4,6 +4,7 @@ import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
+import { createUserType } from "./mutationTypes";
 import {
   getAllUsersPostsProfilesMemberTypesType,
   graphqlBodySchema,
@@ -248,21 +249,27 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
         },
       });
 
-      // const mutation = new GraphQLObjectType({
-      //   name: "Mutation",
-      //   description: "This is the root mutation",
-      //   fields: {
-      //     createUser: {
-      //       type: createUserType,
-      //       async resolve(parent, args, context) {
-
-      //       }
-      //     }
-      //   }
-      // })
+      const mutation = new GraphQLObjectType({
+        name: "Mutation",
+        description: "This is the root mutation",
+        fields: {
+          createUser: {
+            type: createUserType,
+            args: {
+              firstName: { type: GraphQLString },
+              lastName: { type: GraphQLString },
+              email: { type: GraphQLString },
+            },
+            async resolve(parent, args, context) {
+              return await fastify.db.users.create({ ...args });
+            },
+          },
+        },
+      });
 
       const schema = new GraphQLSchema({
         query: rootQuery,
+        mutation: mutation,
         types: [memberTypeType, profileType, postType, userType],
       });
 
