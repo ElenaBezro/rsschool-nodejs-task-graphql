@@ -33,6 +33,21 @@ export const createUserInputType = new GraphQLInputObjectType({
   }),
 });
 
+export const updateUserInputType = new GraphQLInputObjectType({
+  name: "updateUserInput",
+  fields: () => ({
+    firstName: {
+      type: GraphQLString,
+    },
+    lastName: {
+      type: GraphQLString,
+    },
+    email: {
+      type: GraphQLString,
+    },
+  }),
+});
+
 //["avatar", "sex", "birthday", "country", "street", "city", "userId", "memberTypeId"]
 export const createProfileType = new GraphQLObjectType({
   name: "createProfile",

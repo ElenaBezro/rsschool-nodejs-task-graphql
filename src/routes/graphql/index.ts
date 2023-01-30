@@ -5,7 +5,7 @@ import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
-import { createPostInputType, createPostType, createProfileInputType, createProfileType, createUserInputType, createUserType } from "./mutationTypes";
+import { createPostInputType, createPostType, createProfileInputType, createProfileType, createUserInputType, createUserType, updateUserInputType } from "./mutationTypes";
 import {
   getAllUsersPostsProfilesMemberTypesType,
   graphqlBodySchema,
@@ -264,6 +264,21 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
             },
             async resolve(parent, args, context) {
               return await fastify.db.users.create({ ...args.user });
+            },
+          },
+
+          updateUser: {
+            type: createUserType,
+            args: {
+              userId: { type: GraphQLID },
+              userData: { type: updateUserInputType },
+            },
+            async resolve(parent, args, context) {
+              const user = await fastify.db.users.findOne({ key: "id", equals: args.userId });
+
+              if (!user) throw fastify.httpErrors.notFound("User not found");
+              const newUser = await fastify.db.users.change(args.userId, { ...args.userData });
+              return newUser;
             },
           },
 
