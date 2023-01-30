@@ -4,7 +4,24 @@ import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
-import { getAllUsersPostsProfilesMemberTypesType, graphqlBodySchema, memberTypeType, postType, profileType, userFullInfoType, usersWithUserSubscribedToProfile, userType, userWithUserSubscribedToPosts } from "./schema";
+import {
+  getAllUsersPostsProfilesMemberTypesType,
+  graphqlBodySchema,
+  memberTypeType,
+  postType,
+  profileType,
+  userFullInfoType,
+  usersWithFullSubscriptionInfoType,
+  usersWithUserSubscribedToProfile,
+  userType,
+  userWithUserSubscribedToPosts,
+} from "./schema";
+
+type SubscriptionInfo = {
+  userId: string;
+  subscribedToUser: string[];
+  userSubscribedTo: string[];
+};
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> => {
   fastify.post(
@@ -200,6 +217,32 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
                 return { user, subscribedToUser: user.subscribedToUserIds || [], userPosts: null };
               }
               throw fastify.httpErrors.notFound("Not found");
+            },
+          },
+
+          getUsersWithFullSubscriptionInfo: {
+            type: new GraphQLList(usersWithFullSubscriptionInfoType),
+            async resolve(parent, args, context) {
+              const users = await fastify.db.users.findMany();
+
+              const getSubscriptionInfo = async (userId: string): Promise<SubscriptionInfo> => {
+                const user = await fastify.db.users.findOne({ key: "id", equals: userId });
+                if (user) {
+                  const subscribedToUser = user.subscribedToUserIds;
+                  const userSubscribedTo = await fastify.db.users.findMany({ key: "subscribedToUserIds", inArray: user.id });
+                  const subscriptionInfo = { userId, subscribedToUser, userSubscribedTo: userSubscribedTo.map((user) => user.id) };
+                  return subscriptionInfo;
+                }
+                throw fastify.httpErrors.notFound("Not found");
+              };
+
+              const result = users.map(async (user) => {
+                const userSubscribedToEntities = await fastify.db.users.findMany({ key: "subscribedToUserIds", inArray: user.id });
+                const userSubscribedTo = userSubscribedToEntities.map(async (user) => await getSubscriptionInfo(user.id));
+                const subscribedToUser = user.subscribedToUserIds.map(async (id) => await getSubscriptionInfo(id));
+                return { user, subscribedToUser, userSubscribedTo };
+              });
+              return result;
             },
           },
         },

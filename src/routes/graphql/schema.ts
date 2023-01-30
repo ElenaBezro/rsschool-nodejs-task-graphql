@@ -195,3 +195,51 @@ export const userWithUserSubscribedToPosts = new GraphQLObjectType({
     },
   }),
 });
+
+// Get users with their userSubscribedTo, subscribedToUser
+// (additionally for each user in userSubscribedTo, subscribedToUser
+// add their userSubscribedTo, subscribedToUser).
+const userSubscriptionInfoType = new GraphQLObjectType({
+  name: "userSubscriptionInfo",
+  fields: () => ({
+    userId: {
+      type: GraphQLID,
+    },
+    subscribedToUser: {
+      type: new GraphQLList(GraphQLID),
+    },
+    userSubscribedTo: {
+      type: new GraphQLList(GraphQLID),
+    },
+  }),
+});
+
+const userSubscriptionFullInfoType = new GraphQLObjectType({
+  name: "userSubscriptionFullInfo",
+  fields: () => ({
+    userId: {
+      type: GraphQLID,
+    },
+    subscribedToUser: {
+      type: new GraphQLList(userSubscriptionInfoType),
+    },
+    userSubscribedTo: {
+      type: new GraphQLList(userSubscriptionInfoType),
+    },
+  }),
+});
+
+export const usersWithFullSubscriptionInfoType = new GraphQLObjectType({
+  name: "usersWithFullSubscriptionInfo",
+  fields: () => ({
+    user: {
+      type: userType,
+    },
+    subscribedToUser: {
+      type: new GraphQLList(userSubscriptionFullInfoType),
+    },
+    userSubscribedTo: {
+      type: new GraphQLList(userSubscriptionFullInfoType),
+    },
+  }),
+});
