@@ -1,10 +1,4 @@
-// type: createUserType,
-//             args: {
-//               firstName: {type: GraphQLString},
-//               lastName: {type: GraphQLString},
-//               email: {type: GraphQLString}
-
-import { GraphQLID, GraphQLInt, GraphQLObjectType, GraphQLString } from "graphql";
+import { GraphQLID, GraphQLInputObjectType, GraphQLInt, GraphQLNonNull, GraphQLObjectType, GraphQLString } from "graphql";
 
 export const createUserType = new GraphQLObjectType({
   name: "createUser",
@@ -20,6 +14,21 @@ export const createUserType = new GraphQLObjectType({
     },
     email: {
       type: GraphQLString,
+    },
+  }),
+});
+
+export const createUserInputType = new GraphQLInputObjectType({
+  name: "createUserInput",
+  fields: () => ({
+    firstName: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    lastName: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
+    email: {
+      type: new GraphQLNonNull(GraphQLString),
     },
   }),
 });

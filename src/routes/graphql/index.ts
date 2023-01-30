@@ -5,7 +5,7 @@ import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
-import { createPostType, createProfileType, createUserType } from "./mutationTypes";
+import { createPostType, createProfileType, createUserInputType, createUserType } from "./mutationTypes";
 import {
   getAllUsersPostsProfilesMemberTypesType,
   graphqlBodySchema,
@@ -257,12 +257,13 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
           createUser: {
             type: createUserType,
             args: {
-              firstName: { type: GraphQLString },
-              lastName: { type: GraphQLString },
-              email: { type: GraphQLString },
+              user: { type: createUserInputType },
+              // firstName: { type: new GraphQLNonNull(GraphQLString) },
+              // lastName: { type: new GraphQLNonNull(GraphQLString) },
+              // email: { type: new GraphQLNonNull(GraphQLString) },
             },
             async resolve(parent, args, context) {
-              return await fastify.db.users.create({ ...args });
+              return await fastify.db.users.create({ ...args.user });
             },
           },
 
