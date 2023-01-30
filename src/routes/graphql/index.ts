@@ -5,7 +5,19 @@ import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
-import { createPostInputType, createPostType, createProfileInputType, createProfileType, createUserInputType, createUserType, updatePostInputType, updateProfileInputType, updateUserInputType } from "./mutationTypes";
+import {
+  createPostInputType,
+  createPostType,
+  createProfileInputType,
+  createProfileType,
+  createUserInputType,
+  createUserType,
+  subscribeInputType,
+  updateMemberTypeInputType,
+  updatePostInputType,
+  updateProfileInputType,
+  updateUserInputType,
+} from "./mutationTypes";
 import {
   getAllUsersPostsProfilesMemberTypesType,
   graphqlBodySchema,
@@ -282,6 +294,50 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
             },
           },
 
+          subscribeToUser: {
+            type: userType,
+            args: {
+              userId: { type: GraphQLID },
+              userIdToSubscribe: { type: subscribeInputType },
+            },
+            async resolve(parent, args, context) {
+              let user = await fastify.db.users.findOne({ key: "id", equals: args.userId });
+              if (!user) throw fastify.httpErrors.notFound("User not found");
+              let userBlogger: UserEntity | null = await fastify.db.users.findOne({ key: "id", equals: args.userIdToSubscribe.id });
+              if (!userBlogger) throw fastify.httpErrors.notFound("User to subscribe not found");
+
+              if (!userBlogger.subscribedToUserIds.includes(args.userId)) {
+                userBlogger = await fastify.db.users.change(args.userIdToSubscribe.id, {
+                  subscribedToUserIds: [...userBlogger.subscribedToUserIds, args.userId],
+                });
+              }
+
+              return userBlogger;
+            },
+          },
+
+          unsubscribeFromUser: {
+            type: userType,
+            args: {
+              userId: { type: GraphQLID },
+              userIdToUnSubscribe: { type: subscribeInputType },
+            },
+            async resolve(parent, args, context) {
+              let user = await fastify.db.users.findOne({ key: "id", equals: args.userId });
+              if (!user) throw fastify.httpErrors.notFound("User not found");
+              let userBlogger = await fastify.db.users.findOne({ key: "id", equals: args.userIdToUnSubscribe.id });
+              if (!userBlogger) throw fastify.httpErrors.notFound("User to subscribe not found");
+
+              if (userBlogger.subscribedToUserIds.includes(args.userId)) {
+                userBlogger = await fastify.db.users.change(args.userIdToUnSubscribe.id, {
+                  subscribedToUserIds: [...userBlogger.subscribedToUserIds.filter((userIdToFilter) => userIdToFilter !== args.userId)],
+                });
+              }
+
+              return userBlogger;
+            },
+          },
+
           createProfile: {
             type: createProfileType,
             args: {
@@ -349,6 +405,23 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (fastify): Promise<void> 
               const post = await fastify.db.posts.findOne({ key: "id", equals: args.postId });
               if (!post) throw fastify.httpErrors.notFound("Post not found");
               return await fastify.db.posts.change(args.postId, { ...args.postData });
+            },
+          },
+
+          updateMemberType: {
+            type: memberTypeType,
+            args: {
+              memberTypeId: { type: GraphQLString },
+              memberTypeData: { type: updateMemberTypeInputType },
+            },
+            async resolve(parent, args, context) {
+              if (typeof args.memberTypeId !== "string" && (args.memberTypeId !== "basic" || args.memberTypeId !== "business")) {
+                throw fastify.httpErrors.badRequest("Invalid id");
+              }
+              const memberType = await fastify.db.memberTypes.findOne({ key: "id", equals: args.memberTypeId });
+              if (!memberType) throw fastify.httpErrors.notFound("MemberType not found");
+
+              return await fastify.db.memberTypes.change(args.memberTypeId, { ...args.memberTypeData });
             },
           },
         },

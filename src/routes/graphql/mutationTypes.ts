@@ -184,3 +184,24 @@ export const updatePostInputType = new GraphQLInputObjectType({
     },
   }),
 });
+
+export const updateMemberTypeInputType = new GraphQLInputObjectType({
+  name: "updateMemberTypeInput",
+  fields: () => ({
+    discount: {
+      type: GraphQLInt,
+    },
+    monthPostsLimit: {
+      type: GraphQLInt,
+    },
+  }),
+});
+
+export const subscribeInputType = new GraphQLInputObjectType({
+  name: "subscribeInput",
+  fields: () => ({
+    id: {
+      type: GraphQLID,
+    },
+  }),
+});
